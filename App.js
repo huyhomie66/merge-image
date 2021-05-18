@@ -1,59 +1,74 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow strict-local
- */
-
-import React, {useRef} from 'react';
-import {
-  SafeAreaView,
-  StyleSheet,
-  View,
-  StatusBar,
-  Alert,
-  Button,
-} from 'react-native';
-import {DynamicCollage} from 'react-native-images-collage';
+import React from 'react';
+import {SafeAreaView, StyleSheet, Button, Dimensions} from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 import RNImageToPdf from 'react-native-image-to-pdf';
+import Pdf from 'react-native-pdf';
+import {useState} from 'react';
 
-const photos = [
-  'https://picsum.photos/400',
-  'https://picsum.photos/400',
-  'https://picsum.photos/400',
-  'https://picsum.photos/400',
-  'https://picsum.photos/400',
-];
+const {height} = Dimensions.get('window');
 
 const App = () => {
+  const [PDF, setPDF] = useState();
+
   const myAsyncPDFFunction = async () => {
     try {
       const options = {
-        imagePaths: [require('./cat.jpg'), require('./angrycat.jpg')],
+        imagePaths: ['/cat.jpg', '/angrycat.jpg'],
         name: 'Image',
         maxSize: {
           width: 900,
-          height: Math.round((deviceHeight() / deviceWidth()) * 900),
+          height: Math.round((height / height) * 900),
         },
-        quality: 0.7, // optional compression paramter
+        quality: 0.7,
       };
       const pdf = await RNImageToPdf.createPDFbyImages(options);
+      console.log({RNImageToPdf});
 
+      if (pdf) {
+        setPDF(pdf.filePath);
+      }
       console.log(pdf.filePath);
     } catch (e) {
       console.log(e);
     }
   };
+
+  let source = require('./test.pdf'); // TEST
+  let pdfSource = {
+    uri: PDF,
+  }; // TEST
+
   return (
     <SafeAreaView>
       <Button onPress={myAsyncPDFFunction} title="gen pdf" />
+      {PDF && (
+        <Pdf
+          source={pdfSource || source}
+          onLoadComplete={(numberOfPages, filePath) => {
+            console.log(`number of pages: ${numberOfPages}`);
+          }}
+          onPageChanged={(page, numberOfPages) => {
+            console.log(`current page: ${page}`);
+          }}
+          onError={error => {
+            console.log(error);
+          }}
+          onPressLink={uri => {
+            console.log(`Link presse: ${uri}`);
+          }}
+          style={styles.pdf}
+        />
+      )}
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  pdf: {
+    flex: 1,
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height,
+  },
   button: {
     backgroundColor: 'blue',
     width: 25,
